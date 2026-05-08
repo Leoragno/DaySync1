@@ -1,0 +1,101 @@
+{
+  "theme": "DARK",
+  "archetype": "4 (Swiss & High-Contrast - Dark Variant)",
+  "typography": {
+    "heading_font": "Outfit",
+    "body_font": "Manrope",
+    "scale": {
+      "h1": "text-4xl tracking-tight font-light text-zinc-50",
+      "h2": "text-2xl tracking-tight font-medium text-zinc-50",
+      "h3": "text-xl font-medium text-zinc-100",
+      "body": "text-base leading-relaxed text-zinc-300",
+      "small": "text-sm text-zinc-400 tracking-wide",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em] text-zinc-500"
+    }
+  },
+  "colors": {
+    "background": {
+      "primary": "bg-zinc-950",
+      "secondary": "bg-zinc-900",
+      "glass": "bg-zinc-950/70 backdrop-blur-2xl"
+    },
+    "text": {
+      "primary": "text-zinc-50",
+      "secondary": "text-zinc-400",
+      "inverse": "text-zinc-950"
+    },
+    "border": {
+      "subtle": "border-zinc-800/50",
+      "active": "border-zinc-600"
+    },
+    "categories": {
+      "lavoro": "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+      "personale": "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      "studio": "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+      "urgente": "bg-red-500/10 text-red-400 border border-red-500/20"
+    },
+    "action": {
+      "primary": "bg-zinc-50 text-zinc-950 hover:bg-zinc-200 transition-colors",
+      "secondary": "bg-zinc-800 text-zinc-50 hover:bg-zinc-700 transition-colors",
+      "danger": "bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+    }
+  },
+  "spacing_and_layout": {
+    "container_padding": "px-6 py-8",
+    "card_padding": "p-6",
+    "gap": "gap-6",
+    "radius": "rounded-2xl",
+    "borders": "1px solid",
+    "mobile_safe_area": "pb-24"
+  },
+  "components": {
+    "bottom_tab_navigation": {
+      "style": "fixed bottom-0 w-full h-20 backdrop-blur-xl bg-zinc-950/80 border-t border-zinc-800/50 flex justify-around items-center px-4 z-50",
+      "active_icon": "text-zinc-50 scale-110 transition-transform",
+      "inactive_icon": "text-zinc-500",
+      "text_label": "text-[10px] mt-1 font-medium"
+    },
+    "cards": {
+      "style": "bg-zinc-900 border border-zinc-800/50 rounded-2xl p-6",
+      "hover": "hover:bg-zinc-800/80 transition-colors",
+      "no_shadows": "true"
+    },
+    "quick_notes": {
+      "style": "rounded-2xl p-5 relative overflow-hidden flex flex-col gap-2",
+      "interaction": "swipe gestures to delete/archive via framer-motion"
+    },
+    "agenda_calendar": {
+      "style": "grid grid-cols-7 gap-2",
+      "day_card": "aspect-square flex flex-col items-center justify-center rounded-xl border border-transparent hover:border-zinc-800 text-sm transition-colors",
+      "active_day": "bg-zinc-50 text-zinc-950 font-bold",
+      "event_dot": "w-1 h-1 rounded-full mt-1"
+    },
+    "forms": {
+      "input": "bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-50 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all",
+      "label": "text-sm text-zinc-400 mb-1 block"
+    }
+  },
+  "motion": {
+    "page_transition": "framer-motion opacity-0 to opacity-100, y: 10 to y: 0, duration: 0.3s ease-out",
+    "tap_scale": "whileTap={{ scale: 0.97 }}",
+    "swipe_to_action": "framer-motion drag='x', dragConstraints={{ left: -100, right: 0 }}"
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-[1.5px] outline-style"
+  },
+  "media": {
+    "background_texture": "https://images.unsplash.com/photo-1762258344624-52d8c3b74c66?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwyfHxkYXJrJTIwbWluaW1hbGlzdCUyMGFic3RyYWN0JTIwdGV4dHVyZXxlbnwwfHx8fDE3Nzc3NDM3NDh8MA&ixlib=rb-4.1.0&q=85",
+    "empty_state_illustration": "Use simple geometric vector shapes in #18181B with a subtle 1px border"
+  },
+  "instructions_to_main_agent": [
+    "All text, labels, and placeholders MUST be in Italian.",
+    "Use standard HTML tags (div, section, main, header, nav) styled with Tailwind CSS to construct the core layouts. Limit the use of full-screen background colors; instead use the deep zinc-950 base.",
+    "Implement bottom tab navigation using lucide-react icons. Ensure fixed positioning at the bottom with z-index 50 and add pb-24 to the main content area to prevent overlap.",
+    "Avoid Shadcn Card component. Create custom cards with div elements using 'bg-zinc-900 rounded-2xl p-6 border border-zinc-800/50'. DO NOT USE box-shadows, keep the design flat and clean.",
+    "For the quick notes section (Note), use framer-motion to implement swipe gestures.",
+    "Categorized elements (calendar events, notes) should use the defined category colors with low opacity backgrounds (10%) and border/text in the matching solid color.",
+    "Use Outfit for Headings and Manrope for Body. Install via standard web fonts if necessary, or use fallback sans-serif with aggressive tracking-tight for headers.",
+    "All interactive and key informational elements MUST include a data-testid attribute in kebab-case."
+  ]
+}
