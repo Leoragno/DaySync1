@@ -5,7 +5,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import { AuthProvider } from '../src/lib/auth';
+
+// Impedisce alla splash screen di chiudersi automaticamente prima che l'app sia pronta
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* ignore */
+});
 
 // Register widget task handler (Android only, no-op on other platforms)
 if (Platform.OS === 'android') {
@@ -21,12 +28,22 @@ if (Platform.OS === 'android') {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#09090b' }} />;
+  useEffect(() => {
+    console.log('[RootLayout] Startup sequence started');
+    if (fontsLoaded || fontError) {
+      console.log('[RootLayout] Fonts ready, hiding splash screen');
+      SplashScreen.hideAsync().catch(() => {
+        /* ignore */
+      });
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
   }
 
   return (

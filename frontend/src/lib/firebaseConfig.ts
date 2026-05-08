@@ -1,24 +1,28 @@
 import { initializeApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
+// Configurazione Firebase caricata da variabili d'ambiente (Expo Public)
+// Se le variabili mancano, usiamo valori mock per evitare crash durante il bundling
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "missing-api-key",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "missing-auth-domain",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "missing-project-id",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "missing-storage-bucket",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "missing-sender-id",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "missing-app-id",
 };
 
 const app = initializeApp(firebaseConfig);
 
-// Firestore (Expo safe)
+// Inizializza Firestore.
+// NOTA: La persistenza offline con il JS SDK in React Native è limitata.
+// Usiamo persistentLocalCache senza tabManager (che è solo per il Web) per evitare crash.
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
+  localCache: persistentLocalCache({}),
 });
 
-// Auth (semplice e compatibile Expo)
+// Auth (compatibile con React Native)
 export const auth = getAuth(app);
 
 export default app;
