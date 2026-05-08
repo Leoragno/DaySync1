@@ -29,33 +29,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const ensureUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-    const userRef = doc(db, 'users', fbUser.uid);
-    const userSnap = await getDoc(userRef);
+    try {
+      console.log('[Auth] Ensuring user profile for:', fbUser.uid);
+      const userRef = doc(db, 'users', fbUser.uid);
+      const userSnap = await getDoc(userRef);
 
-    const payload: Record<string, unknown> = {
-      uid: fbUser.uid,
-      email: fbUser.email ?? null,
-      displayName: fbUser.displayName ?? null,
-      isAnonymous: fbUser.isAnonymous,
-      lastLoginAt: serverTimestamp(),
-    };
+      const payload: Record<string, unknown> = {
+        uid: fbUser.uid,
+        email: fbUser.email ?? null,
+        displayName: fbUser.displayName ?? null,
+        isAnonymous: fbUser.isAnonymous,
+        lastLoginAt: serverTimestamp(),
+      };
 
-    if (!userSnap.exists()) {
-      payload.createdAt = serverTimestamp();
+      if (!userSnap.exists()) {
+        payload.createdAt = serverTimestamp();
+      }
+
+      await setDoc(
+        userRef,
+        payload,
+        { merge: true }
+      );
+      console.log('[Auth] User profile ensured');
+    } catch (e) {
+      console.error('[Auth] Errore assicurazione profilo:', e);
+      // Non blocchiamo l'auth se Firestore fallisce (es. offline e cache vuota)
     }
-
-    await setDoc(
-      userRef,
-      payload,
-      { merge: true }
-    );
   }, []);
 
   useEffect(() => {
+    console.log('[Auth] Initializing onAuthStateChanged');
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       try {
         if (fbUser) {
-          await ensureUserProfile(fbUser);
+          console.log('[Auth] User detected:', fbUser.uid);
+          // Eseguiamo il bootstrap del profilo in background per non bloccare il caricamento iniziale
+          ensureUserProfile(fbUser);
           setUser({
             id: fbUser.uid,
             email: fbUser.email,
@@ -63,17 +73,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAnonymous: fbUser.isAnonymous,
           });
         } else {
+          console.log('[Auth] No user detected');
           setUser(null);
         }
       } catch (e) {
-        console.error('Errore durante il bootstrap profilo utente:', e);
+        console.error('[Auth] Errore durante il bootstrap profilo utente:', e);
         setUser(null);
       } finally {
         setLoading(false);
+        console.log('[Auth] Loading state set to false');
       }
     });
 
-    return unsubscribe;
+    return () => {
+      console.log('[Auth] Unsubscribing from auth state changes');
+      unsubscribe();
+    };
   }, [ensureUserProfile]);
 
   const login = async (email: string, password: string) => {
