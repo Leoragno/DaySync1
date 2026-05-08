@@ -1,0 +1,95 @@
+{
+  "expo": {
+    "name": "DaySync",
+    "slug": "daysync",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "daysync",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.daysync.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#09090b"
+      },
+      "package": "com.daysync.app",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#09090b"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#fafafa"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "DaySyncWidget",
+              "label": "DaySync - Eventi di oggi",
+              "description": "Mostra gli eventi in programma per oggi",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "QuickNotesWidget",
+              "label": "DaySync - Note rapide",
+              "description": "Mostra le tue note rapide più recenti",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "ScheduleWidget",
+              "label": "DaySync - Orario di oggi",
+              "description": "Mostra le attività dell'orario di oggi",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

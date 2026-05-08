@@ -1,0 +1,60 @@
+Running Firebase diagnostics for project: daysync-f4b1e
+Report mode: ON (firebase-check-report.txt)
+
+=== Firebase CLI version ===
+$ firebase --version
+15.15.0
+Status: OK
+
+=== Authenticated Firebase accounts ===
+$ firebase login:list
+Logged in as leonardo.ragno07@gmail.com
+Status: OK
+
+=== Accessible Firebase projects ===
+$ firebase projects:list
+Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+- Preparing the list of your Firebase projects
+× Preparing the list of your Firebase projects
+Status: FAILED (exit 2)
+Retrying after 1500ms due to transient network/API error...
+
+=== Accessible Firebase projects (retry 2) ===
+$ firebase projects:list
+Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+- Preparing the list of your Firebase projects
+× Preparing the list of your Firebase projects
+Status: FAILED (exit 2)
+
+=== Active Firebase project ===
+$ firebase use --project daysync-f4b1e
+daysync-f4b1e
+Status: OK
+
+=== Hosting channels ===
+$ firebase hosting:channel:list --project daysync-f4b1e
+Error: Failed to get Firebase project daysync-f4b1e. Please make sure the project exists and your account has permission to access it.
+Status: FAILED (exit 2)
+
+=== API Reachability ===
+- Google Service Usage API reachability: UNREACHABLE (TypeError: fetch failed)
+- Firebase Management API reachability: UNREACHABLE (TypeError: fetch failed)
+- Firebase Hosting API reachability: UNREACHABLE (TypeError: fetch failed)
+
+=== Summary ===
+Checks passed: 3/5
+API endpoints reachable: 0/3
+Failed checks:
+- Accessible Firebase projects
+  -> Check VPN/proxy/firewall and retry in 1-2 minutes.
+  -> Try: firebase projects:list --debug
+  -> If on corporate network, allow Google APIs used by Firebase CLI.
+- Hosting channels
+  -> Verify project ID is correct: daysync-f4b1e
+  -> Confirm your Google account has access in Firebase Console IAM.
+  -> Try opening Hosting in Firebase Console once, then rerun checks.
+Unreachable API endpoints detected:
+- Google Service Usage API reachability
+- Firebase Management API reachability
+- Firebase Hosting API reachability
+  -> This strongly suggests a local network/proxy/firewall issue.
