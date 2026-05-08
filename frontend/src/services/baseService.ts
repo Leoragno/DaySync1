@@ -1,17 +1,4 @@
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp, 
-  Timestamp,
-  updateDoc
-} from 'firebase/firestore';
-import { db, auth } from '../lib/firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
 
 export type SyncStatus = 'synced' | 'pending' | 'error';
@@ -19,11 +6,23 @@ export type SyncStatus = 'synced' | 'pending' | 'error';
 export interface BaseDocument {
   id: string;
   _version: number;
-  _updatedAt: any; // Firestore Timestamp or Date
+  _updatedAt: string; // ISO Date String
   _syncStatus: SyncStatus;
   _updatedBy: string;
   [key: string]: any;
 }
+
+// User mock for the current context (simulating auth user)
+const getCurrentUserId = async (): Promise<string | null> => {
+  try {
+    const savedUser = await AsyncStorage.getItem('daysync_auth_user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      return user.id;
+    }
+  } catch (e) {}
+  return null;
+};
 
 export class BaseService<T extends BaseDocument> {
   protected collectionName: string;
@@ -32,51 +31,60 @@ export class BaseService<T extends BaseDocument> {
     this.collectionName = collectionName;
   }
 
-  protected getSubCollectionPath() {
-    const userId = auth.currentUser?.uid;
+  protected async getStorageKey() {
+    const userId = await getCurrentUserId();
     if (!userId) throw new Error('Utente non autenticato');
-    return `users/${userId}/${this.collectionName}`;
+    return `daysync_db_${this.collectionName}_${userId}`;
   }
 
   async getAll(): Promise<T[]> {
-    const path = this.getSubCollectionPath();
-    const q = query(collection(db, path), orderBy('_updatedAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ ...d.data(), id: d.id } as T));
+    try {
+      const key = await this.getStorageKey();
+      const raw = await AsyncStorage.getItem(key);
+      if (!raw) return [];
+      const data = JSON.parse(raw) as T[];
+      // Return sorted by updated_at desc (most recent first)
+      return data.sort((a, b) => b._updatedAt.localeCompare(a._updatedAt));
+    } catch (error) {
+      console.error(`Error fetching all from ${this.collectionName}:`, error);
+      return [];
+    }
   }
 
   async save(data: Partial<T>): Promise<T> {
-    const userId = auth.currentUser?.uid;
+    const userId = await getCurrentUserId();
     if (!userId) throw new Error('Utente non autenticato');
 
-    const id = data.id || (uuid.v4() as string);
-    const path = this.getSubCollectionPath();
-    const docRef = doc(db, path, id);
+    const key = await this.getStorageKey();
+    const raw = await AsyncStorage.getItem(key);
+    const allData = raw ? (JSON.parse(raw) as T[]) : [];
 
-    // Fetch existing for versioning and conflict resolution
-    const existingSnap = await getDoc(docRef);
-    let newVersion = 1;
+    const id = data.id || (uuid.v4() as string);
+    const existingIndex = allData.findIndex((item) => item.id === id);
     
-    if (existingSnap.exists()) {
-      const existingData = existingSnap.data() as T;
-      // Basic Conflict Resolution: Last-Write-Wins with Version check
-      newVersion = (existingData._version || 0) + 1;
+    let newVersion = 1;
+    if (existingIndex > -1) {
+      newVersion = (allData[existingIndex]._version || 0) + 1;
     }
 
     const finalData: T = {
       ...(data as any),
       id,
       _version: newVersion,
-      _updatedAt: serverTimestamp(),
-      _syncStatus: 'pending', // Set to pending initially
+      _updatedAt: new Date().toISOString(),
+      _syncStatus: 'synced', // Locally everything is synced
       _updatedBy: userId,
     };
 
+    if (existingIndex > -1) {
+      allData[existingIndex] = finalData;
+    } else {
+      allData.push(finalData);
+    }
+
     try {
-      await setDoc(docRef, finalData);
-      // Once written to Firestore (even if offline, it returns success)
-      // Firestore handles the actual sync in background
-      return { ...finalData, _syncStatus: 'synced' }; 
+      await AsyncStorage.setItem(key, JSON.stringify(allData));
+      return finalData;
     } catch (error) {
       console.error(`Error saving to ${this.collectionName}:`, error);
       return { ...finalData, _syncStatus: 'error' };
@@ -84,23 +92,32 @@ export class BaseService<T extends BaseDocument> {
   }
 
   async delete(id: string): Promise<void> {
-    const path = this.getSubCollectionPath();
-    await deleteDoc(doc(db, path, id));
+    const key = await this.getStorageKey();
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return;
+
+    let allData = JSON.parse(raw) as T[];
+    allData = allData.filter((item) => item.id !== id);
+
+    await AsyncStorage.setItem(key, JSON.stringify(allData));
   }
 
-  // Helper per aggiornamento parziale
   async patch(id: string, updates: Partial<T>): Promise<void> {
-    const path = this.getSubCollectionPath();
-    const docRef = doc(db, path, id);
+    const key = await this.getStorageKey();
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return;
+
+    const allData = JSON.parse(raw) as T[];
+    const index = allData.findIndex((item) => item.id === id);
     
-    const existingSnap = await getDoc(docRef);
-    const existingData = existingSnap.data() as T;
-    
-    await updateDoc(docRef, {
-      ...updates,
-      _version: (existingData?._version || 0) + 1,
-      _updatedAt: serverTimestamp(),
-      _syncStatus: 'pending'
-    });
+    if (index > -1) {
+      allData[index] = {
+        ...allData[index],
+        ...updates,
+        _version: (allData[index]._version || 0) + 1,
+        _updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(key, JSON.stringify(allData));
+    }
   }
 }
