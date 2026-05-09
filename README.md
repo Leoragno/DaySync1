@@ -1,36 +1,32 @@
 # DaySync Workspace
 
-Questa app è ora **Local-First** e autonoma. Non richiede più un server locale per funzionare, poiché utilizza `AsyncStorage` per la persistenza dei dati e l'autenticazione.
+Questa app è progettata per funzionare autonomamente su Android tramite Firebase. Per garantire che l'app non dipenda dal computer o dal prompt di Expo sempre aperto, è necessario generare una **Production Build** (un file APK standalone).
 
-## Sviluppo e Build
+## Sviluppo vs Produzione
 
-### 1. Sviluppo locale
-Per avviare l'app in modalità sviluppo:
-```bash
-cd frontend
-npm install
-npx expo start
-```
+*   **Sviluppo (npx expo start)**: Richiede che il prompt sia aperto sul PC. Utile solo mentre scrivi il codice.
+*   **Produzione (APK Standalone)**: L'app viene installata sul telefono, si collega direttamente a Firebase Cloud e funziona per sempre senza bisogno del computer.
 
-### 2. Generazione APK Standalone (Android)
-Per creare un APK che funzioni autonomamente sul dispositivo senza dipendere dal server di sviluppo Metro:
+## Come rendere l'app autonoma (Creare l'APK)
 
-**Requisiti**: Avere `eas-cli` installato (`npm install -g eas-cli`) e un account Expo.
+Per ottenere l'app che "va da sola":
 
-1.  **Configurazione build locale (opzionale se non si usa il cloud Expo)**:
+1.  **Installa EAS CLI**:
     ```bash
-    eas build --profile preview --platform android --local
+    npm install -g eas-cli
     ```
-    *Nota: La build locale richiede Android Studio e Java configurati.*
-
-2.  **Build via Expo Cloud (più semplice)**:
+2.  **Accedi a Expo**:
+    ```bash
+    eas login
+    ```
+3.  **Crea l'APK**:
+    Dalla cartella `frontend`, esegui:
     ```bash
     eas build --profile preview --platform android
     ```
-    Dopo il completamento, scarica l'APK dal link fornito da Expo e installalo sul dispositivo.
+    *   Scegli `preview` per avere un file `.apk` scaricabile.
+    *   Una volta finito, installa l'APK sul tuo telefono.
+    *   **Ora puoi chiudere il prompt sul PC**: l'app sul telefono continuerà a funzionare collegandosi a Firebase.
 
-### 3. Widget Android
-I widget sono inclusi nell'APK e si aggiornano automaticamente ogni 30 minuti o ogni volta che i dati vengono modificati all'interno dell'app. Funzionano solo nell'APK installato, non in Expo Go.
-
-## Note sulla migrazione
-L'app è stata migrata da un'architettura basata su Firebase/Python Backend a una soluzione locale basata su `AsyncStorage`. Tutti i dati salvati sono memorizzati esclusivamente sul dispositivo dell'utente.
+## Note sui Workflow
+I workflow di GitHub Actions sono stati configurati per supportare la build automatica e il deploy su Firebase Hosting.
