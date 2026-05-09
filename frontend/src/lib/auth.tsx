@@ -9,7 +9,7 @@ import {
   User as FirebaseUser 
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebaseConfig';
+import { auth, db, isFirebaseConfigured } from './firebaseConfig';
 
 export type User = { id: string; email: string | null; name?: string; isAnonymous: boolean };
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const ensureUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+    if (!db) return;
     const userRef = doc(db, 'users', fbUser.uid);
     const userSnap = await getDoc(userRef);
 
@@ -52,6 +53,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!auth || !isFirebaseConfigured) {
+      // Local mode: use a fixed guest user or null
+      setUser({
+        id: 'local-guest',
+        email: 'local@daysync.internal',
+        name: 'Utente Locale',
+        isAnonymous: true,
+      });
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       try {
         if (fbUser) {
@@ -77,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [ensureUserProfile]);
 
   const login = async (email: string, password: string) => {
+    if (!auth) throw new Error('Firebase non configurato');
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (e: any) {
@@ -85,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (email: string, password: string, name?: string) => {
+    if (!auth) throw new Error('Firebase non configurato');
     try {
       const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
       if (name) {
@@ -96,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginAnonymously = async () => {
+    if (!auth) throw new Error('Firebase non configurato');
     try {
       await signInAnonymously(auth);
     } catch (e: any) {
@@ -104,6 +120,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    if (!auth) {
+      setUser(null);
+      return;
+    }
     await signOut(auth);
   };
 
