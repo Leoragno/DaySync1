@@ -1,13 +1,13 @@
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp, 
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp,
   Timestamp,
   updateDoc
 } from 'firebase/firestore';
@@ -56,7 +56,7 @@ export class BaseService<T extends BaseDocument> {
     // Fetch existing for versioning and conflict resolution
     const existingSnap = await getDoc(docRef);
     let newVersion = 1;
-    
+
     if (existingSnap.exists()) {
       const existingData = existingSnap.data() as T;
       // Basic Conflict Resolution: Last-Write-Wins with Version check
@@ -76,7 +76,7 @@ export class BaseService<T extends BaseDocument> {
       await setDoc(docRef, finalData);
       // Once written to Firestore (even if offline, it returns success)
       // Firestore handles the actual sync in background
-      return { ...finalData, _syncStatus: 'synced' }; 
+      return { ...finalData, _syncStatus: 'synced' };
     } catch (error) {
       console.error(`Error saving to ${this.collectionName}:`, error);
       return { ...finalData, _syncStatus: 'error' };
@@ -95,7 +95,7 @@ export class BaseService<T extends BaseDocument> {
     
     const existingSnap = await getDoc(docRef);
     const existingData = existingSnap.data() as T;
-    
+
     await updateDoc(docRef, {
       ...updates,
       _version: (existingData?._version || 0) + 1,
