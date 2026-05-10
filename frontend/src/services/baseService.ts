@@ -2,13 +2,13 @@ import {
   collection, 
   doc, 
   setDoc, 
-  getDoc, 
   getDocs, 
   deleteDoc, 
   query, 
   orderBy, 
   serverTimestamp, 
-  updateDoc
+  updateDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db, auth, isFirebaseConfigured } from '../lib/firebaseConfig';
 import uuid from 'react-native-uuid';
@@ -19,7 +19,7 @@ export type SyncStatus = 'synced' | 'pending' | 'error' | 'local';
 export interface BaseDocument {
   id: string;
   _version: number;
-  _updatedAt: any; // Firestore Timestamp or Date
+  _updatedAt: any; // Firestore Timestamp or Date string
   _syncStatus: SyncStatus;
   _updatedBy: string;
   [key: string]: any;
@@ -42,6 +42,20 @@ export class BaseService<T extends BaseDocument> {
     return `@DaySync:${userId}:${this.collectionName}`;
   }
 
+  // Convert Firestore Timestamps to ISO strings for local storage compatibility
+  private serializeForLocal(data: T[]): T[] {
+    return data.map(item => {
+      const newItem = { ...item };
+      if (newItem._updatedAt instanceof Timestamp) {
+        newItem._updatedAt = newItem._updatedAt.toDate().toISOString();
+      } else if (newItem._updatedAt && typeof newItem._updatedAt.toDate === 'function') {
+        // Handle FieldValue or other Firestore specific types if they leak
+        newItem._updatedAt = new Date().toISOString();
+      }
+      return newItem;
+    });
+  }
+
   private async getLocalData(): Promise<T[]> {
     try {
       const data = await AsyncStorage.getItem(this.getLocalKey());
@@ -54,7 +68,8 @@ export class BaseService<T extends BaseDocument> {
 
   private async saveLocalData(data: T[]) {
     try {
-      await AsyncStorage.setItem(this.getLocalKey(), JSON.stringify(data));
+      const serialized = this.serializeForLocal(data);
+      await AsyncStorage.setItem(this.getLocalKey(), JSON.stringify(serialized));
     } catch (e) {
       console.error('Error saving local data:', e);
     }
@@ -92,12 +107,13 @@ export class BaseService<T extends BaseDocument> {
       newVersion = (existingLocal[existingIndex]._version || 0) + 1;
     }
 
+    const now = new Date().toISOString();
     const finalData: T = {
       ...(data as any),
       id,
       _version: newVersion,
-      _updatedAt: isFirebaseConfigured && db ? serverTimestamp() : new Date().toISOString(),
-      _syncStatus: isFirebaseConfigured && db ? 'pending' : 'local',
+      _updatedAt: now, // Default to ISO string for local immediate use
+      _syncStatus: isFirebaseConfigured && db && auth?.currentUser ? 'pending' : 'local',
       _updatedBy: userId,
     };
 
@@ -113,7 +129,12 @@ export class BaseService<T extends BaseDocument> {
       try {
         const path = this.getSubCollectionPath();
         const docRef = doc(db, path, id);
-        await setDoc(docRef, finalData);
+        // Use serverTimestamp for Firestore consistency
+        const firestoreData = {
+          ...finalData,
+          _updatedAt: serverTimestamp()
+        };
+        await setDoc(docRef, firestoreData);
         return { ...finalData, _syncStatus: 'synced' };
       } catch (error) {
         console.error(`Error saving to Firestore ${this.collectionName}:`, error);
@@ -149,8 +170,8 @@ export class BaseService<T extends BaseDocument> {
       ...existingLocal[index],
       ...updates,
       _version: (existingLocal[index]._version || 0) + 1,
-      _updatedAt: isFirebaseConfigured && db ? serverTimestamp() : new Date().toISOString(),
-      _syncStatus: isFirebaseConfigured && db ? 'pending' : 'local'
+      _updatedAt: new Date().toISOString(),
+      _syncStatus: isFirebaseConfigured && db && auth?.currentUser ? 'pending' : 'local'
     };
 
     existingLocal[index] = updatedItem;
@@ -163,7 +184,7 @@ export class BaseService<T extends BaseDocument> {
         await updateDoc(docRef, {
           ...updates,
           _version: updatedItem._version,
-          _updatedAt: updatedItem._updatedAt,
+          _updatedAt: serverTimestamp(),
           _syncStatus: 'pending'
         });
       } catch (error) {
