@@ -6,6 +6,13 @@ import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
 import { AuthProvider } from '../src/lib/auth';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+
+// Preveniamo l'auto-hide dello splash screen per gestire il caricamento manuale
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* ignore errors */
+});
 
 // Register widget task handler (Android only, no-op on other platforms)
 if (Platform.OS === 'android') {
@@ -15,18 +22,26 @@ if (Platform.OS === 'android') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { widgetTaskHandler } = require('../src/widgets/widgetTaskHandler');
     registerWidgetTaskHandler(widgetTaskHandler);
-  } catch {
-    // library not available in current environment
+  } catch (error) {
+    console.warn('Native widget registration failed (expected if config is missing):', error);
   }
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#09090b' }} />;
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {
+        /* ignore errors */
+      });
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
   }
 
   return (
